@@ -222,7 +222,7 @@ class Enemy(pg.sprite.Sprite):
         敵機を速度ベクトルself.vx, self.vyに基づき移動させる
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         """
-        if self.rect.centerx < self.bound or self.rect.centery < 50 or HEIGHT-200 < self.rect.centery:  # xが停止位置に到達 or yが画面外になったら停止
+        if self.rect.centerx < self.bound or self.rect.centery < 50 or HEIGHT-200 < self.rect.centery:  # xが停止位置に到達 or yが画面端になったら停止
             self.vx = 0
             self.vy = 0
             self.state = "stop"
