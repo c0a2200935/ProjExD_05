@@ -200,6 +200,9 @@ class Explosion(pg.sprite.Sprite):
 class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
+    右端から出現してランダムな角度で移動する
+    ランダムな距離移動して止まる
+    移動中に画面外に出そうになった時も止まる
     """
     imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
     
@@ -207,21 +210,23 @@ class Enemy(pg.sprite.Sprite):
         super().__init__()
         self.image = random.choice(__class__.imgs)
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
-        self.vy = +6
-        self.bound = random.randint(50, HEIGHT/2)  # 停止位置
-        self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.rect.center = WIDTH, random.randint(200, HEIGHT-200)
+        self.vx = random.randint(-10, -6)
+        self.vy = random.randint(-6, 6)
+        self.bound = random.randint(WIDTH/2, WIDTH-100)  # 停止位置
+        self.state = "down"  # 移動状態or停止状態
+        self.interval = random.randint(50, 200)  # 爆弾投下インターバル
 
     def update(self):
         """
-        敵機を速度ベクトルself.vyに基づき移動（降下）させる
+        敵機を速度ベクトルself.vx, self.vyに基づき移動させる
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
-        引数 screen：画面Surface
         """
-        if self.rect.centery > self.bound:
+        if self.rect.centerx < self.bound or self.rect.centery < 50 or HEIGHT-200 < self.rect.centery:  # xが停止位置に到達 or yが画面外になったら停止
+            self.vx = 0
             self.vy = 0
             self.state = "stop"
+        self.rect.centerx += self.vx
         self.rect.centery += self.vy
 
 
