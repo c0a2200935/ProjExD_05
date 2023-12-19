@@ -154,10 +154,14 @@ class Beam(pg.sprite.Sprite):
         angle = math.degrees(math.atan2(-self.vy, self.vx))
         angle0 = 0
         angle += angle0
+
+        #スコア100を超え得たらビームを長いやつ(beam_1.png)に切り替える
+        #スコア100未満の場合はそのまま
         if score.value < 100:
             self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam.png"), angle, 2.0)
         elif score.value >= 100:
             self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_1.png"), angle, 0.5)
+
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
