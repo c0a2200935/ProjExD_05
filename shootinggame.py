@@ -143,10 +143,11 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, boss_group: pg.sprite.Group):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
+        引数 boss_group：ボスのグループ
         """
         super().__init__()
         self.vx, self.vy = bird.dire
@@ -155,18 +156,24 @@ class Beam(pg.sprite.Sprite):
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
-        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
-        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.rect.centery = bird.rect.centery + bird.rect.height * self.vy
+        self.rect.centerx = bird.rect.centerx + bird.rect.width * self.vx
         self.speed = 10
+        self.boss_group = boss_group  # ボスのグループを保持
 
     def update(self):
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
         """
-        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        self.rect.move_ip(+self.speed * self.vx, +self.speed * self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
+
+        # ボスに当たった場合
+        boss_hit = pg.sprite.spritecollide(self, self.boss_group, False)
+        if boss_hit:
+            boss_hit[0].damage()  # ボスにダメージを与える
+            self.kill()  # ビームを削除する
 
 
 class Explosion(pg.sprite.Sprite):
@@ -244,8 +251,61 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Boss(pg.sprite.Sprite):
+    """
+    ボスに関するクラス
+    """
+    def __init__(self):
+        super().__init__()
+        original_image = pg.image.load(f"{MAIN_DIR}/fig/alien1.png")
+        self.image = pg.transform.scale(original_image, (200, 200))  # 画像のサイズを拡大
+        self.rect = self.image.get_rect()
+        self.rect.center = WIDTH + self.rect.width // 2, HEIGHT // 2
+        self.speed = 5
+        self.max_x = 1400  # 移動を止めるx座標の上限
+        self.hp = 10  # ボスのHP
+        self.bombs = pg.sprite.Group()
+
+    def update(self,bird,bombs):
+        """
+        ボスを上下に移動させ、速度ベクトル(-1, dy)に基づき移動させる
+        """
+        if self.hp <= 0:  # HPが0以下になったらボスは死亡
+            self.kill()
+            return
+
+        # 上下に移動
+        self.rect.centery += self.speed
+        if self.rect.top < 0 or self.rect.bottom > HEIGHT:
+            self.speed *= -1  # 上下の境界に達したら速度の向きを反転
+
+        if self.rect.left < self.max_x:  # 移動範囲の上限を超えていない場合
+            self.rect.move_ip(-self.speed, 0)
+
+        # 画面内に収まっているか確認
+        if self.rect.left < 0:  
+            self.rect.left = 0  # 左端に戻す
+
+        if self.rect.right > WIDTH:  
+            self.rect.right = WIDTH  # 右端に戻す
+            
+        # 定期的に爆弾を生成
+        if pg.time.get_ticks() % 30 == 0:
+            bomb = Bomb(self, bird)
+            self.bombs.add(bomb)
+            bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加
+            print("AAA")
+    def damage(self):
+        """
+        ボスにダメージを与える
+        """
+        self.hp -= 1
+
+
+
+
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("こうかとんシューティング")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     score = Score()
@@ -256,15 +316,18 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
-    tmr = 0
+    tmr = 9800
+    
     clock = pg.time.Clock()
+    
+    boss_group = pg.sprite.Group()
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
+                beams.add(Beam(bird,boss_group)) # boss_group を引数として渡す
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -291,6 +354,12 @@ def main():
             time.sleep(2)
             return
 
+        if tmr == 10000:
+            boss_group.add(Boss())
+
+        boss_group.update(bird,bombs)
+        boss_group.draw(screen)
+        
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
