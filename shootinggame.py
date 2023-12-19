@@ -266,7 +266,7 @@ class Boss(pg.sprite.Sprite):
         self.hp = 10  # ボスのHP
         self.bombs = pg.sprite.Group()
 
-    def update(self,bird,bombs):
+    def update(self, bird: Bird, bombs: pg.sprite.Group) -> None:
         """
         ボスを上下に移動させ、速度ベクトル(-1, dy)に基づき移動させる
         """
@@ -300,8 +300,6 @@ class Boss(pg.sprite.Sprite):
         ボスにダメージを与える
         """
         self.hp -= 1
-
-
 
 
 def main():
