@@ -72,6 +72,7 @@ class Bird(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed = 10
+        self.beam_type = 0
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -81,6 +82,24 @@ class Bird(pg.sprite.Sprite):
         """
         self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
+
+    def change_beam_type(self, key):
+        # キーに応じてビームの種類を切り替える
+        if key == pg.K_1:
+            self.beam_type = 1
+        elif key == pg.K_2:
+            self.beam_type = 2
+        elif key == pg.K_0:
+            self.beam_type = 0
+
+    def create_beam(self):
+        # 現在のビームの種類に応じてビームを作成する
+        if self.beam_type == 1:
+            return Beam1(self)
+        elif self.beam_type == 2:
+            return Beam2(self)
+        elif self.beam_type == 0:
+            return Beam(self)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -143,7 +162,7 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird, score:"Score"):
+    def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
@@ -157,11 +176,8 @@ class Beam(pg.sprite.Sprite):
 
         #スコア100を超え得たらビームを長いやつ(beam_1.png)に切り替える
         #スコア100未満の場合はそのまま
-        if score.value < 100:
-            self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam.png"), angle, 2.0)
-        elif score.value >= 100:
-            self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_1.png"), angle, 0.5)
-
+        
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
@@ -178,9 +194,62 @@ class Beam(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
-#class NeoBeam(pg.sprite.Sptite):
-    #def __init__(self,bird:Bird,num):
+
+class Beam1(pg.sprite.Sprite):
+    def __init__(self, bird: Bird):
         
+        super().__init__()
+        self.vx, self.vy = bird.dire
+        self.state = "beam_1"
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle0 = 0
+        angle += angle0
+
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_1.png"), angle, 0.5)
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
+
+class Beam2(pg.sprite.Sprite):
+    def __init__(self, bird: Bird):
+        
+        super().__init__()
+        self.vx, self.vy = bird.dire
+        self.state = "beam_1"
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle0 = 0
+        angle += angle0
+
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_2.png"), angle, 0.5)
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -276,8 +345,11 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird,score))
+            if event.type == pg.KEYDOWN:
+                bird.change_beam_type(event.key)
+                if event.key == pg.K_SPACE:
+                    beams.add(bird.create_beam())
+
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
