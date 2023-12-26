@@ -48,7 +48,7 @@ class Bird(pg.sprite.Sprite):
         pg.K_RIGHT: (+1, 0),
     }
 
-    def __init__(self, num: int, xy: tuple[int, int]):
+    def __init__(self, num: int, xy: tuple[int, int],boss_group):
         """
         こうかとん画像Surfaceを生成する
         引数1 num：こうかとん画像ファイル名の番号
@@ -72,6 +72,8 @@ class Bird(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed = 10
+        self.beam_type = 0
+        self.boss_group = boss_group
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -81,6 +83,27 @@ class Bird(pg.sprite.Sprite):
         """
         self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
+
+    def change_beam_type(self, key, score:"Score"):
+        # キーに応じてビームの種類を切り替える
+        if key == pg.K_1 and score.value >= 50:
+            self.kill()
+            self.beam_type = 1
+        elif key == pg.K_2 and score.value >= 100:
+            self.kill()
+            self.beam_type = 2
+        elif key == pg.K_0:
+            self.kill()
+            self.beam_type = 0
+
+    def create_beam(self):
+        # 現在のビームの種類に応じてビームを作成する
+        if self.beam_type == 1:
+            return Beam1(self,self.boss_group)
+        elif self.beam_type == 2:
+            return Beam2(self,self.boss_group)
+        elif self.beam_type == 0:
+            return Beam(self,self.boss_group)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -152,6 +175,9 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle0 = 0
+        angle += angle0
+        
         self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -166,6 +192,74 @@ class Beam(pg.sprite.Sprite):
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
         """
         self.rect.move_ip(+self.speed * self.vx, +self.speed * self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
+        # ボスに当たった場合
+        boss_hit = pg.sprite.spritecollide(self, self.boss_group, False)
+        if boss_hit:
+            boss_hit[0].damage()  # ボスにダメージを与える
+            self.kill()  # ビームを削除する
+
+
+class Beam1(pg.sprite.Sprite):
+    def __init__(self, bird: Bird, boss_group: pg.sprite.Group):
+        
+        super().__init__()
+        self.vx, self.vy = bird.dire
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle0 = 0
+        angle += angle0
+
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_1.png"), angle, 0.5)
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+        self.boss_group = boss_group  # ボスのグループを保持
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+        
+        # ボスに当たった場合
+        boss_hit = pg.sprite.spritecollide(self, self.boss_group, False)
+        if boss_hit:
+            boss_hit[0].damage()  # ボスにダメージを与える
+            self.kill()  # ビームを削除する
+
+
+class Beam2(pg.sprite.Sprite):
+    def __init__(self, bird: Bird, boss_group: pg.sprite.Group):
+        
+        super().__init__()
+        self.vx, self.vy = bird.dire
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle0 = 0
+        angle += angle0
+
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam_2.png"), angle, 0.5)
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+        self.boss_group = boss_group  # ボスのグループを保持
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
 
@@ -313,8 +407,8 @@ def main():
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)  # scroll 反転した背景を準備
     score = Score()
-
-    bird = Bird(3, (900, 400))
+    boss_group = pg.sprite.Group()
+    bird = Bird(3, (900, 400),boss_group)
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
@@ -324,21 +418,37 @@ def main():
     
     clock = pg.time.Clock()
     
-    boss_group = pg.sprite.Group()
+    keytype = 0
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird,boss_group)) # boss_group を引数として渡す
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_0:
+                    keytype = 0
+                if event.key == pg.K_1:
+                    keytype = 1
+                if event.key == pg.K_2:
+                    keytype = 2
+                
+                bird.change_beam_type(event.key,score)
+                if event.key == pg.K_SPACE:
+                    
+                    if keytype == 0:
+                        beams.add(Beam(bird,boss_group))
+                    if keytype == 1 and score.value >= 50:
+                        beams.add(Beam1(bird,boss_group))
+                    if keytype == 2 and score.value >= 100:
+                        beams.add(Beam2(bird,boss_group))
+                    beams.add(bird.create_beam()) 
         if tmr * 8 < 9600:  # scroll tmrが一定の値以下の間スクロールする 6400n + 3200
             x = tmr * 8 % 3200
             screen.blit(bg_img, [-x, 0])
             screen.blit(bg_img2, [1600-x, 0])
             screen.blit(bg_img, [3200-x, 0])
         else:  # ボスが出現したらストップ
-            screen.blit(bg_img, [0, 0])
+             screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
