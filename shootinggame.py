@@ -85,9 +85,9 @@ class Bird(pg.sprite.Sprite):
 
     def change_beam_type(self, key, score:"Score"):
         # キーに応じてビームの種類を切り替える
-        if key == pg.K_1:
+        if key == pg.K_1 and score.value >= 50:
             self.beam_type = 1
-        elif key == pg.K_2:
+        elif key == pg.K_2 and score.value >= 100:
             self.beam_type = 2
         elif key == pg.K_0:
             self.beam_type = 0
@@ -343,7 +343,7 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN:
-                bird.change_beam_type(event.key)
+                bird.change_beam_type(event.key,score)
                 if event.key == pg.K_SPACE:
                     beams.add(bird.create_beam())
 
