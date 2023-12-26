@@ -386,7 +386,45 @@ class Score:
         """
         self.score_value = value
 
+    def show_game_over(self, screen):
+        """
+        ゲームオーバー画面を表示するメソッド
+        """
+        # ダークなオーバーレイを描画
+        overlay = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))  # 黒色で透明度を指定
 
+        # ゲームオーバーのテキストを描画
+        game_over_font = pg.font.Font(None, 300)
+        game_over_text = game_over_font.render("Game Over", True, (255, 0, 0))
+        game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 30))
+
+        # スコアの表示
+        score_font = pg.font.Font(None, 200)
+        score_text = score_font.render(f"Score: {self.value}", True, (255, 255, 255))
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 120))
+
+        # オーバーレイを画面に描画
+        screen.blit(overlay, (0, 0))
+        
+        # テキストを描画
+        screen.blit(game_over_text, game_over_rect)
+        screen.blit(score_text, score_rect)
+        pg.display.flip()
+
+        # キー入力を待つ
+        wait_for_key = True
+        while wait_for_key:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+                elif event.type == pg.KEYDOWN:
+                    wait_for_key = False
+
+            pg.time.Clock().tick(30)  # イベントをチェックする頻度を制御
+            
+            
 class Boss(pg.sprite.Sprite):
     """
     ボスに関するクラス
@@ -521,9 +559,9 @@ def main():
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             time.sleep(1)
             if score.bird_life == 0:
+                score.show_game_over(screen)
                 score.update(screen)
                 pg.display.update()
-                time.sleep(2)
                 return
               
         if tmr*8 == 9600:
