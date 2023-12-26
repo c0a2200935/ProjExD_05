@@ -341,14 +341,46 @@ class Score:
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
         self.value = 0
+        self.score_value = 0
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
+        self.bird_life = 3
+        self.score_image = self.font.render(f"Score: {self.score_value}", 0, self.color)
+        self.load_life_image()  # 残機画像の読み込み
+
+
+        self.score_rect = self.score_image.get_rect()
+        self.score_rect.center = 100, HEIGHT-50
+
+        self.life_images = [self.life_image.copy() for _ in range(self.bird_life)]
+        self.life_rects = [
+            self.life_images[i].get_rect(center=(250 + i * 40, HEIGHT-50)) for i in range(self.bird_life)
+        ]
+
+    def load_life_image(self):
+        self.life_image = pg.image.load(f"{MAIN_DIR}/fig/2.png")
+
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        for life_rect in self.life_rects:
+            screen.blit(self.life_image, life_rect)  # 同じ画像を表示
         screen.blit(self.image, self.rect)
 
+    def decrease_life(self):
+        """
+        残機を減らすメソッド
+        """
+        if self.bird_life > 0:
+            self.bird_life -= 1
+            self.life_rects.pop()  # 残機画像のリストから最後の画像を取り除く  
+
+    def set_score(self, value):
+        """
+        スコアを設定するメソッド
+        """
+        self.score_value = value
 
 class Boss(pg.sprite.Sprite):
     """
@@ -413,7 +445,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
-
+    Bird_life = 3
     tmr = 0
     
     clock = pg.time.Clock()
@@ -468,11 +500,16 @@ def main():
             score.value += 1  # 1点アップ
 
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+            score.decrease_life()
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
+
+            time.sleep(1)
+
+            if score.bird_life == 0:
+                score.update(screen)
+                pg.display.update()
+                time.sleep(2)
+                return
 
         if tmr*8 == 9600:
             boss_group.add(Boss())
