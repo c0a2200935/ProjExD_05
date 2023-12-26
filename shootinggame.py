@@ -48,7 +48,6 @@ class Bird(pg.sprite.Sprite):
         pg.K_RIGHT: (+1, 0),
     }
 
-
     def __init__(self, num: int, xy: tuple[int, int],boss_group):
         """
         こうかとん画像Surfaceを生成する
@@ -167,7 +166,6 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-
     def __init__(self, bird: Bird, boss_group: pg.sprite.Group):
         """
         ビーム画像Surfaceを生成する
@@ -179,7 +177,6 @@ class Beam(pg.sprite.Sprite):
         angle = math.degrees(math.atan2(-self.vy, self.vx))
         angle0 = 0
         angle += angle0
-
         self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -240,7 +237,6 @@ class Beam1(pg.sprite.Sprite):
 
 class Beam2(pg.sprite.Sprite):
     def __init__(self, bird: Bird, boss_group: pg.sprite.Group):
-        
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx))
@@ -360,11 +356,8 @@ class Score:
         self.bird_life = 3
         self.score_image = self.font.render(f"Score: {self.score_value}", 0, self.color)
         self.load_life_image()  # 残機画像の読み込み
-
-
         self.score_rect = self.score_image.get_rect()
         self.score_rect.center = 100, HEIGHT-50
-
         self.life_images = [self.life_image.copy() for _ in range(self.bird_life)]
         self.life_rects = [
             self.life_images[i].get_rect(center=(250 + i * 40, HEIGHT-50)) for i in range(self.bird_life)
@@ -372,7 +365,6 @@ class Score:
 
     def load_life_image(self):
         self.life_image = pg.image.load(f"{MAIN_DIR}/fig/2.png")
-
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
@@ -407,7 +399,7 @@ class Boss(pg.sprite.Sprite):
         self.rect.center = WIDTH + self.rect.width // 2, HEIGHT // 2
         self.speed = 5
         self.max_x = 1400  # 移動を止めるx座標の上限
-        self.hp = 10  # ボスのHP
+        self.hp = 15  # ボスのHP
         self.bombs = pg.sprite.Group()
 
     def update(self, bird: Bird, bombs: pg.sprite.Group) -> None:
@@ -438,7 +430,7 @@ class Boss(pg.sprite.Sprite):
             bomb = Bomb(self, bird)
             self.bombs.add(bomb)
             bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加
-            print("AAA")
+
     def damage(self):
         """
         ボスにダメージを与える
@@ -455,6 +447,7 @@ class Drop(pg.sprite.Sprite):
     
     def update(self):
         self.rect.centerx -= 9
+        
         
 def main():
     pg.display.set_caption("こうかとんシューティング")
