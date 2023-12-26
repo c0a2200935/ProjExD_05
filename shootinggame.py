@@ -248,9 +248,9 @@ class Drop(pg.sprite.Sprite):
     def __init__(self,enemy: Enemy):
         super().__init__()
         self.image = pg.Surface((15, 15))
-        pg.draw.rect(self.image, (random.randint(0,255),random.randint(0,255),random.randint(0,255)),(0, 0, 15, 15))
+        pg.draw.rect(self.image, (0,0,255),(0, 0, 15, 15))
         self.rect= self.image.get_rect(center=enemy.rect.center)
-     
+    
     def update(self):
         self.rect.centery += 3
         
@@ -283,7 +283,6 @@ def main():
             if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
-
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
@@ -294,7 +293,7 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
-
+            
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
@@ -320,7 +319,6 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
 
 if __name__ == "__main__":
     pg.init()
