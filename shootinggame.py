@@ -311,6 +311,7 @@ def main():
     pg.display.set_caption("こうかとんシューティング")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
+    bg_img2 = pg.transform.flip(bg_img, True, False)  # scroll 反転した背景を準備
     score = Score()
 
     bird = Bird(3, (900, 400))
@@ -319,7 +320,7 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
-    tmr = 9800
+    tmr = 0
     
     clock = pg.time.Clock()
     
@@ -331,7 +332,13 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird,boss_group)) # boss_group を引数として渡す
-        screen.blit(bg_img, [0, 0])
+        if tmr * 8 < 9600:  # scroll tmrが一定の値以下の間スクロールする 6400n + 3200
+            x = tmr * 8 % 3200
+            screen.blit(bg_img, [-x, 0])
+            screen.blit(bg_img2, [1600-x, 0])
+            screen.blit(bg_img, [3200-x, 0])
+        else:  # ボスが出現したらストップ
+            screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
@@ -357,7 +364,7 @@ def main():
             time.sleep(2)
             return
 
-        if tmr == 10000:
+        if tmr*8 == 9600:
             boss_group.add(Boss())
 
         boss_group.update(bird,bombs)
