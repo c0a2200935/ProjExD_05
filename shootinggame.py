@@ -433,7 +433,7 @@ class Boss(pg.sprite.Sprite):
     """
     ボスに関するクラス
     """
-    def __init__(self,exps):
+    def __init__(self,exps,screen):
         super().__init__()
         original_image = pg.image.load(f"{MAIN_DIR}/fig/alien1.png")
         self.image = pg.transform.scale(original_image, (200, 200))  # 画像のサイズを拡大
@@ -444,13 +444,15 @@ class Boss(pg.sprite.Sprite):
         self.hp = 15  # ボスのHP
         self.bombs = pg.sprite.Group()
         self.exps = exps
+        self.screen = screen
 
-    def update(self, bird: Bird, bombs: pg.sprite.Group) -> None:
+    def update(self, bird: Bird, bombs: pg.sprite.Group,value) -> None:
         """
         ボスを上下に移動させ、速度ベクトル(-1, dy)に基づき移動させる
         """
         if self.hp <= 0:  # HPが0以下になったらボスは死亡
             self.explode(self.exps)
+            self.show_game_clear(self.screen)
             self.kill()
             return
         
@@ -473,7 +475,8 @@ class Boss(pg.sprite.Sprite):
         if pg.time.get_ticks() % 30 == 0:
             bomb = Bomb(self, bird)
             self.bombs.add(bomb)
-            bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加       
+            bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加   
+        self.value = value    
 
     def damage(self):
         """
@@ -488,7 +491,46 @@ class Boss(pg.sprite.Sprite):
         explosion = Explosion(self, 200)  # 爆発エフェクト
         exps.add(explosion)
 
+    
+    def show_game_clear(self, screen):
+        """
+        ゲームオーバー画面を表示するメソッド
+        """
+        # ダークなオーバーレイを描画
+        overlay = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))  # 黒色で透明度を指定
 
+        # ゲームオーバーのテキストを描画
+        game_over_font = pg.font.Font(None, 300)
+        game_over_text = game_over_font.render("Game Clear", True, (0, 255, 0))
+        game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 30))
+
+        # スコアの表示
+        score_font = pg.font.Font(None, 200)
+        score_text = score_font.render(f"Score: {self.value}", True, (255, 255, 255))
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 120))
+
+        # オーバーレイを画面に描画
+        screen.blit(overlay, (0, 0))
+        
+        # テキストを描画
+        screen.blit(game_over_text, game_over_rect)
+        screen.blit(score_text, score_rect)
+        pg.display.flip()
+
+        # キー入力を待つ
+        wait_for_key = True
+        while wait_for_key:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+                elif event.type == pg.KEYDOWN:
+                    wait_for_key = False
+
+            pg.time.Clock().tick(10)  # イベントをチェックする頻度を制御
+            
+            
 class Drop(pg.sprite.Sprite):
     def __init__(self,enemy: Enemy):
         super().__init__()
@@ -578,12 +620,12 @@ def main():
                 return
               
         if tmr*8 == 9600:
-            boss_group.add(Boss(exps))
+            boss_group.add(Boss(exps,screen))
             
         for drop in pg.sprite.spritecollide(bird, drops, True):
             score.value += 10 
           
-        boss_group.update(bird,bombs)
+        boss_group.update(bird,bombs,score.value)
         boss_group.draw(screen)
         bird.update(key_lst, screen)
         beams.update()
