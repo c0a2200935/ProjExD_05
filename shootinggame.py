@@ -39,7 +39,7 @@ def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
 
 class Bird(pg.sprite.Sprite):
     """
-    ゲームキャラクター（こうかとん）に関するクラス
+    ゲームキャラクター（戦闘機）に関するクラス
     """
     delta = {  # 押下キーと移動量の辞書
         pg.K_UP: (0, -1),
@@ -55,17 +55,19 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/{num}.png"), 0, 2.0)
-        img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
+        img0 = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/2091142.png"), 0, 2.0)
+        img = pg.transform.flip(img0, True, False)  # デフォルトの戦闘機
+        img = pg.transform.scale(img,(100,100))
+        img0 = pg.transform.scale(img0,(100,100))
         self.imgs = {
-            (+1, 0): img,  # 右
-            (+1, -1): pg.transform.rotozoom(img, 45, 1.0),  # 右上
-            (0, -1): pg.transform.rotozoom(img, 90, 1.0),  # 上
-            (-1, -1): pg.transform.rotozoom(img0, -45, 1.0),  # 左上
-            (-1, 0): img0,  # 左
-            (-1, +1): pg.transform.rotozoom(img0, 45, 1.0),  # 左下
-            (0, +1): pg.transform.rotozoom(img, -90, 1.0),  # 下
-            (+1, +1): pg.transform.rotozoom(img, -45, 1.0),  # 右下
+            (+1, 0): pg.transform.rotozoom(img, -90, 1.0),  # 右
+            (+1, -1): pg.transform.rotozoom(img, -45, 1.0),  # 右上
+            (0, -1): pg.transform.rotozoom(img, 0, 1.0),  # 上
+            (-1, -1): pg.transform.rotozoom(img0, 45, 1.0),  # 左上
+            (-1, 0): pg.transform.rotozoom(img0, 90, 1.0),  # 左
+            (-1, +1): pg.transform.rotozoom(img0, 135, 1.0),  # 左下
+            (0, +1): pg.transform.rotozoom(img, 180, 1.0),  # 下
+            (+1, +1): pg.transform.rotozoom(img, -135, 1.0),  # 右下
         }
         self.dire = (+1, 0)
         self.image = self.imgs[self.dire]
@@ -81,7 +83,8 @@ class Bird(pg.sprite.Sprite):
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/{num}.png"), 0, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/2091142.png"), 0, 2.0)
+        self.image = pg.transform.scale(self.image,(100,100))
         screen.blit(self.image, self.rect)
 
     def change_beam_type(self, key, score:"Score"):
@@ -107,7 +110,7 @@ class Bird(pg.sprite.Sprite):
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
-        押下キーに応じてこうかとんを移動させる
+        押下キーに応じて戦闘機を移動させる
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
@@ -488,7 +491,7 @@ class Drop(pg.sprite.Sprite):
         
         
 def main():
-    pg.display.set_caption("こうかとんシューティング")
+    pg.display.set_caption("シューティング")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)  # scroll 反転した背景を準備
@@ -546,7 +549,7 @@ def main():
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
-            bird.change_img(6, screen)  # こうかとん喜びエフェクト
+            bird.change_img(6, screen)
             if random.randint(0,100)<50:
                 drops.add(Drop(emy))
        
@@ -556,7 +559,7 @@ def main():
             
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             score.decrease_life()
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            bird.change_img(8, screen) 
             time.sleep(1)
             if score.bird_life == 0:
                 score.show_game_over(screen)
