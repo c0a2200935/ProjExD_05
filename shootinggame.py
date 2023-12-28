@@ -367,7 +367,8 @@ class Score:
         ]
 
     def load_life_image(self):
-        self.life_image = pg.image.load(f"{MAIN_DIR}/fig/2.png")
+        self.life_image = pg.image.load(f"{MAIN_DIR}/fig/2091142.png")
+        self.life_image = pg.transform.scale(self.life_image,(30,30))
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
@@ -432,7 +433,7 @@ class Boss(pg.sprite.Sprite):
     """
     ボスに関するクラス
     """
-    def __init__(self):
+    def __init__(self,exps):
         super().__init__()
         original_image = pg.image.load(f"{MAIN_DIR}/fig/alien1.png")
         self.image = pg.transform.scale(original_image, (200, 200))  # 画像のサイズを拡大
@@ -442,15 +443,17 @@ class Boss(pg.sprite.Sprite):
         self.max_x = 1400  # 移動を止めるx座標の上限
         self.hp = 15  # ボスのHP
         self.bombs = pg.sprite.Group()
+        self.exps = exps
 
     def update(self, bird: Bird, bombs: pg.sprite.Group) -> None:
         """
         ボスを上下に移動させ、速度ベクトル(-1, dy)に基づき移動させる
         """
         if self.hp <= 0:  # HPが0以下になったらボスは死亡
+            self.explode(self.exps)
             self.kill()
             return
-
+        
         # 上下に移動
         self.rect.centery += self.speed
         if self.rect.top < 0 or self.rect.bottom > HEIGHT:
@@ -470,13 +473,20 @@ class Boss(pg.sprite.Sprite):
         if pg.time.get_ticks() % 30 == 0:
             bomb = Bomb(self, bird)
             self.bombs.add(bomb)
-            bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加
+            bombs.add(bomb)  # ボスの爆弾を全体の爆弾グループにも追加       
 
     def damage(self):
         """
         ボスにダメージを与える
         """
         self.hp -= 1
+        
+    def explode(self,exps):
+        """
+        ボスが爆発するエフェクトを生成する
+        """
+        explosion = Explosion(self, 200)  # 爆発エフェクト
+        exps.add(explosion)
 
 
 class Drop(pg.sprite.Sprite):
@@ -568,7 +578,7 @@ def main():
                 return
               
         if tmr*8 == 9600:
-            boss_group.add(Boss())
+            boss_group.add(Boss(exps))
             
         for drop in pg.sprite.spritecollide(bird, drops, True):
             score.value += 10 
