@@ -494,7 +494,7 @@ class Boss(pg.sprite.Sprite):
     
     def show_game_clear(self, screen):
         """
-        ゲームオーバー画面を表示するメソッド
+        ゲームクリアー画面を表示するメソッド
         """
         # ダークなオーバーレイを描画
         overlay = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
@@ -528,7 +528,7 @@ class Boss(pg.sprite.Sprite):
                 elif event.type == pg.KEYDOWN:
                     wait_for_key = False
 
-            pg.time.Clock().tick(10)  # イベントをチェックする頻度を制御
+            pg.time.Clock().tick(1)  # イベントをチェックする頻度を制御
             
             
 class Drop(pg.sprite.Sprite):
